@@ -70,3 +70,12 @@ bind-key -n M-] run-shell -b 'p="$(tmux-dirs pop "$(tmux display -p "#{session_i
 
 This simple line protocol matches the “original dirs-like” UX: the CLI prints whatever the server returns.
 
+# P.S.
+Yes, I agree, there is might be way more easier implementation via serializing/deserilizing json. I used such an overkill with IPC+Rust only in order to learn and get familiar with IPC and Rust. It's my first project on rust though. 
+
+# Contibuting 
+I'm open to any improvements or contribution activities. 
+```bash
+Open an issue -> Fork -> Create PR
+```
+I will review as soon as I have time. 
