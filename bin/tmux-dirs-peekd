@@ -1,0 +1,8 @@
+#!/usr/bin/env bash 
+
+CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+cli="$CURRENT_DIR/release/cli"
+session="$(tmux display -p '#S')"
+dir="$("$cli" peekd "$session")" || { echo "tmux-dirs-peekd failed" >&2; }
+[ -d "$dir" ] && { echo "$dir"; cd "$dir"; } || { echo " " >&2; }

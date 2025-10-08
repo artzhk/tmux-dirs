@@ -1,0 +1,9 @@
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
+edition = "2025"
+license = "MIT"
+default-members = ["crates/cli", "crates/server"]
+
