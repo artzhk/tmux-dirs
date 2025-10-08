@@ -2,6 +2,10 @@
 
 Per-session directory stacks for tmux, implemented as a user-space daemon plus a CLI. The CLI communicates with the server over a UNIX domain socket. No system-level services required.
 
+
+https://github.com/user-attachments/assets/fad0aef5-74ef-4466-b15f-9fdd903c2313
+
+
 ## Installation
 
 1. Put to your .tmux.conf after `set -g @plugin 'tmux-plugins/tpm'` before `run '~/.tmux/plugins/tpm/tpm'` 
