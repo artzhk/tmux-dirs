@@ -10,6 +10,10 @@ Per-session directory stacks for tmux, implemented as a user-space daemon plus a
 set -g @plugin 'artzhk/tmux-dirs'
 ```
 
+```
+Ctrl+b I # to run tpm's plugin isntallation script
+```
+
 3. Provide aliases to `.bashrc` or `.profile`
 ```bash 
 alias tpushd="~/.tmux/plugins/tmux-dirs/bin/tmux-dirs-pushd"
