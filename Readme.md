@@ -8,6 +8,10 @@ https://github.com/user-attachments/assets/fad0aef5-74ef-4466-b15f-9fdd903c2313
 
 ## Installation
 
+### Prerequisites
++ cargo and rust are properly installed
++ `rustup default stable` toolchain is used
+
 1. Put to your .tmux.conf after `set -g @plugin 'tmux-plugins/tpm'` before `run '~/.tmux/plugins/tpm/tpm'` 
 
 ```tmux 
@@ -15,7 +19,7 @@ set -g @plugin 'artzhk/tmux-dirs'
 ```
 
 ```
-Ctrl+b I # to run tpm's plugin isntallation script
+Ctrl+b I # to run tpm's plugin installation script
 ```
 
 3. Provide aliases to `.bashrc` or `.profile`
