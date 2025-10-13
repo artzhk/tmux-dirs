@@ -1,7 +1,5 @@
 BUILDDIR := ../bin
 
-INSTALLBIN ?= $(HOME)/.local/bin
-
 .PHONY: build clean
 
 build: 

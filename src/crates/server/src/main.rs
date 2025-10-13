@@ -15,6 +15,9 @@ fn handle_stream(state: &mut AppState, mut s: UnixStream) -> std::io::Result<()>
         }
 
         let v: Vec<&str> = buf.clone().collect();
+        if v.len() == 0 {
+            return false
+        }
         return (is_cmd_tok(v.len(), v[0]) && v.len() == 3 && v[2].contains("/"))
             || (is_cmd_tok(v.len(), v[0]));
     }
@@ -120,15 +123,21 @@ fn main() -> std::io::Result<()> {
 
     let path = "/tmp/dirs.sock";
     if Path::new(&path).exists() {
-        remove_file(&path).map_err(|e| {
-            io::Error::new(e.kind(), format!("remove stale socket {path} failed: {e}"))
-        })?;
+        match UnixStream::connect(&path) {
+            Ok(_) => {
+                eprintln!("another instance is already running, shutdown...");
+                //std::process::exit(0);
+            }
+            Err(_) => {
+                remove_file(&path)?;
+            }
+        }
     }
 
     let listener = UnixListener::bind(path)
         .map_err(|e| io::Error::new(e.kind(), format!("bind({path}) failed: {e}")))?;
     listener
-        .set_nonblocking(true)
+        .set_nonblocking(false)
         .map_err(|e| io::Error::new(e.kind(), format!("set_nonblocking failed: {e}")))?;
 
     let shutdown = Arc::new(AtomicBool::new(false));
@@ -146,8 +155,12 @@ fn main() -> std::io::Result<()> {
             Ok((stream, _addr)) => {
                 if let Err(err) = handle_stream(&mut state, stream) {
                     eprintln!("handle_stream error: {err}");
-                    return Err(err);
+                    continue;
                 }
+            }
+            Err(e) if e.kind() == ErrorKind::AddrInUse => {
+                eprintln!("another instance is already running, shutdown...");
+                std::process::exit(0);
             }
             Err(ref err) if err.kind() == ErrorKind::WouldBlock => {
                 std::thread::sleep(std::time::Duration::from_millis(50));
@@ -160,7 +173,6 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    // Best-effort cleanup of the socket path on exit.
     if Path::new(&path).exists() {
         if let Err(e) = remove_file(&path) {
             eprintln!("cleanup remove_file({path}) failed: {e}");
