@@ -43,20 +43,6 @@ tmux-dirs dirs  <session-id>          # print stack as space-separated list
 tmux-dirs clear <session-id>          # clear stack
 ```
 
-Usage from tmux (examples):
-
-```tmux
-# Push current pane dir
-bind-key -n M-[ run-shell -b 'tmux display -p -F "#{session_id} #{pane_current_path}" \
-  | xargs -r sh -c '\''tmux-dirs push "$0" "$1"'\'' '
-
-# Pop and cd in the active pane
-bind-key -n M-] run-shell -b 'p="$(tmux-dirs pop "$(tmux display -p "#{session_id}")")"; \
-  [ -n "$p" ] && tmux send-keys -l "cd -- $p" Enter'
-```
-* `server` starts a per-user background server that keeps stacks in memory.
-* `tmux-dirs <cmd>` is a one-shot client that connects to the server, sends a single request, prints the server’s reply to stdout, and exits.
-* The server is started automatically by tmux hooks on `client-attached` and `session-created` if it is not already running.
 
 ### Socket
 * Path: `/tmp/dirs.sock`.
