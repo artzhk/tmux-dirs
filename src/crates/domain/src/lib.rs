@@ -69,6 +69,5 @@ impl FromStr for Cmd {
 }
 
 pub fn is_path_free(cmd: &String) -> bool {
-    return *cmd != Cmd::Push.to_string(); 
+    return *cmd != Cmd::Push.to_string();
 }
-

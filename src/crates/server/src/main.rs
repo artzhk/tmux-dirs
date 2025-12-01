@@ -16,7 +16,7 @@ fn handle_stream(state: &mut AppState, mut s: UnixStream) -> std::io::Result<()>
 
         let v: Vec<&str> = buf.clone().collect();
         if v.len() == 0 {
-            return false
+            return false;
         }
         return (is_cmd_tok(v.len(), v[0]) && v.len() == 3 && v[2].contains("/"))
             || (is_cmd_tok(v.len(), v[0]));
@@ -110,23 +110,32 @@ fn dirs(stack: &AppState, session: &str) -> Vec<String> {
     };
 }
 
-fn main() -> std::io::Result<()> {
+fn main() -> std::process::ExitCode {
+    match run() {
+        Ok(()) => std::process::ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("fatal error: {e}");
+            std::process::ExitCode::from(2)
+        }
+    }
+}
+
+fn run() -> std::io::Result<()> {
     use std::fs::remove_file;
     use std::path::Path;
 
     use signal_hook::consts::signal::{SIGINT, SIGQUIT, SIGTERM};
     use signal_hook::flag;
     use std::sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     };
 
     let path = "/tmp/dirs.sock";
     if Path::new(&path).exists() {
         match UnixStream::connect(&path) {
             Ok(_) => {
-                eprintln!("another instance is already running, shutdown...");
-                //std::process::exit(0);
+                return Ok(());
             }
             Err(_) => {
                 remove_file(&path)?;
@@ -134,8 +143,14 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    let listener = UnixListener::bind(path)
-        .map_err(|e| io::Error::new(e.kind(), format!("bind({path}) failed: {e}")))?;
+    let listener = match UnixListener::bind(path) {
+        Ok(l) => l,
+        Err(ref e) if e.kind() == ErrorKind::AddrInUse => {
+            return Ok(());
+        }
+        Err(e) => return Err(e),
+    };
+
     listener
         .set_nonblocking(false)
         .map_err(|e| io::Error::new(e.kind(), format!("set_nonblocking failed: {e}")))?;
@@ -159,8 +174,7 @@ fn main() -> std::io::Result<()> {
                 }
             }
             Err(e) if e.kind() == ErrorKind::AddrInUse => {
-                eprintln!("another instance is already running, shutdown...");
-                std::process::exit(0);
+                return Ok(());
             }
             Err(ref err) if err.kind() == ErrorKind::WouldBlock => {
                 std::thread::sleep(std::time::Duration::from_millis(50));
@@ -203,9 +217,11 @@ mod tests {
     fn popd_test() {
         let mut state: AppState = test_data();
         let res = popd(&mut state, "session");
-        assert!(state
-            .get(&"session".to_string())
-            .is_some_and(|x| x[0] == "dir1".to_string()));
+        assert!(
+            state
+                .get(&"session".to_string())
+                .is_some_and(|x| x[0] == "dir1".to_string())
+        );
         assert_eq!(res, "dir2".to_string());
     }
 
@@ -213,9 +229,11 @@ mod tests {
     fn peek_test() {
         let mut state: AppState = test_data();
         let res = peekd(&mut state, "session");
-        assert!(state
-            .get(&"session".to_string())
-            .is_some_and(|x| x[1] == "dir2".to_string()));
+        assert!(
+            state
+                .get(&"session".to_string())
+                .is_some_and(|x| x[1] == "dir2".to_string())
+        );
         assert_eq!(res, "dir2".to_string());
     }
 
@@ -231,9 +249,11 @@ mod tests {
     fn pushd_test() {
         let mut state: AppState = test_data();
         pushd(&mut state, "test", "path");
-        assert!(state
-            .get(&"test".to_string())
-            .is_some_and(|x| x[x.len() - 1] == "path".to_string()));
+        assert!(
+            state
+                .get(&"test".to_string())
+                .is_some_and(|x| x[x.len() - 1] == "path".to_string())
+        );
     }
 
     #[test]

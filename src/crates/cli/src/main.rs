@@ -42,7 +42,7 @@ fn cli() -> std::io::Result<()> {
     use domain::is_path_free;
     use std::io::prelude::*;
     use std::os::unix::net::UnixStream;
-    use std::path::{absolute, Path};
+    use std::path::{Path, absolute};
 
     let args = get_args()?;
     let cmd = args.cmd.to_string();
@@ -65,26 +65,44 @@ fn cli() -> std::io::Result<()> {
 
     let mut path = "".to_string();
     if !is_path_free(&cmd) {
-        path = String::from(absolute(&args.path)
-            .map_err(|e| Error::new(ErrorKind::InvalidInput, format!("canonicalize path failed: {e}")))?
-            .to_str().ok_or_else(|| Error::new(ErrorKind::InvalidInput, "path contains invalid UTF-8"))?);
+        path = String::from(
+            absolute(&args.path)
+                .map_err(|e| {
+                    Error::new(
+                        ErrorKind::InvalidInput,
+                        format!("canonicalize path failed: {e}"),
+                    )
+                })?
+                .to_str()
+                .ok_or_else(|| {
+                    Error::new(ErrorKind::InvalidInput, "path contains invalid UTF-8")
+                })?,
+        );
     }
 
     let mut stream = match UnixStream::connect("/tmp/dirs.sock") {
         Ok(sock) => sock,
         Err(err) => {
-            return Err(Error::new(ErrorKind::NotFound, format!("connect /tmp/dirs.sock failed: {err}")));
+            return Err(Error::new(
+                ErrorKind::NotFound,
+                format!("connect /tmp/dirs.sock failed: {err}"),
+            ));
         }
     };
 
-    stream.write_all(format!("{} {} {}", args.cmd.to_char(), args.session_id, path).as_bytes())
+    stream
+        .write_all(format!("{} {} {}", args.cmd.to_char(), args.session_id, path).as_bytes())
         .map_err(|e| Error::new(e.kind(), format!("write request failed: {e}")))?;
-    stream.flush().map_err(|e| Error::new(e.kind(), format!("flush failed: {e}")))?;
-    stream.shutdown(std::net::Shutdown::Write)
+    stream
+        .flush()
+        .map_err(|e| Error::new(e.kind(), format!("flush failed: {e}")))?;
+    stream
+        .shutdown(std::net::Shutdown::Write)
         .map_err(|e| Error::new(e.kind(), format!("shutdown(Write) failed: {e}")))?;
 
     let mut r = String::new();
-    stream.read_to_string(&mut r)
+    stream
+        .read_to_string(&mut r)
         .map_err(|e| Error::new(e.kind(), format!("read response failed: {e}")))?;
 
     println!("{}", &r);
